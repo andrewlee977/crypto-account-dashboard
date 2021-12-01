@@ -92,6 +92,11 @@ column2 = dbc.Col(
         html.Br(),
         html.Br(),
         html.Br(),
+        dcc.Markdown("# TOTAL ETHER VALUE (USD)"),
+        html.Div(id='ether_value'),
+        html.Br(),
+        html.Br(),
+        html.Br(),
         dcc.Markdown("# TRANSACTIONS"),
         html.Div(id='transaction_count'),
         html.Br(),
@@ -105,10 +110,10 @@ column2 = dbc.Col(
 layout = dbc.Row([column1, column2])
 
 
-
 @app.callback(
     [Output(component_id='display_address', component_property='children'),
     Output(component_id='balance', component_property='children'),
+    Output(component_id='ether_value', component_property='children'),
     Output(component_id='transaction_count', component_property='children'),
     Output(component_id='nft_transfers', component_property='children'),
     Output(component_id='token_transfers', component_property='children')],
@@ -125,37 +130,37 @@ def get_balance(n_clicks, address):
         
         # find balance for address
         balance_wei = w3.eth.get_balance(clean_address)
-        balance_eth = str(w3.fromWei(balance_wei, 'ether')) + ' ETH'
+        converted = w3.fromWei(balance_wei, 'ether') 
+        balance_eth = str(converted) + ' ETH'
+
+        # Value of Ether Balance
+        response_ether = requests.get(f"https://api.etherscan.io/api?module=stats&action=ethprice&apikey={etherscan_key}")
+        ether_price = response_ether.json()['result']['ethusd']
+        print(ether_price)
+        print(converted)
+        ether_value = float(ether_price) * float(converted)
 
         # find transaction count for address
         transaction_count = w3.eth.get_transaction_count(clean_address)
 
         # find how many NFT's have been transferred
-        response = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokennfttx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
+        response_nft = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokennfttx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
         nft_transfers = []
-        results = response.json()['result']
+        results = response_nft.json()['result']
         for i in range(len(results)):
             if i == 0:
                 nft_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
             else:
                 nft_transfers.append(f", {i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
 
-
         # ERC20 token transfers
-        response = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokentx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
+        response_token = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokentx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
         token_transfers = []
-        results = response.json()['result']
+        results = response_token.json()['result']
         for i in range(len(results)):
             if i == 0:
                 token_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
             else:
                 token_transfers.append(f", {i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
 
-    return address, balance_eth, transaction_count, nft_transfers, token_transfers
-
-# @app.callback(
-#     [Output(component_id='transaction_count', component_property='children')],
-#     [Input(component_id=)]
-# )
-
-
+    return address, balance_eth, ether_value, transaction_count, nft_transfers, token_transfers
