@@ -120,7 +120,7 @@ def get_balance(n_clicks, address):
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        clean_address = address.strip()
+        clean_address = Web3.toChecksumAddress(address.strip())
         print(clean_address)
         
         # find balance for address
