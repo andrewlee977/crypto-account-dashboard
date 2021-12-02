@@ -1,3 +1,3 @@
 # Dash Template
 
-[Instructions](https://lambdaschool.github.io/ds/unit2/dash-template/)
+![Dashboard](assets/app_screenshot.png "Dashboard")
