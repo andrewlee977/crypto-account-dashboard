@@ -33,7 +33,7 @@ column1 = dbc.Col(
             ## Track Your Crypto Assets
 
             View your crypto portfolio all in one place.
-            Put in an address to get started 👇
+            Type in an address to get started 👇
 
             """
         ),
