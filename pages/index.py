@@ -10,6 +10,7 @@ from dash.exceptions import PreventUpdate
 import plotly.express as px
 
 from web3 import Web3
+from ens import ENS
 
 # Imports from this application
 from app import app
@@ -75,8 +76,6 @@ column1 = dbc.Col(
 )
 
 gapminder = px.data.gapminder()
-# fig = px.scatter(gapminder.query("year==2007"), x="gdpPercap", y="lifeExp", size="pop", color="continent",
-#            hover_name="country", log_x=True, size_max=60)
 
 column2 = dbc.Col(
     [
@@ -125,8 +124,12 @@ def get_balance(n_clicks, address):
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        clean_address = Web3.toChecksumAddress(address.strip())
-        print(clean_address)
+        address = address.strip()
+        if address[:2] == '0x':
+            clean_address = Web3.toChecksumAddress(address.strip())
+        else:
+            ns = ENS.fromWeb3(w3)
+            clean_address = ns.address(address)
         
         # find balance for address
         balance_wei = w3.eth.get_balance(clean_address)
@@ -136,9 +139,7 @@ def get_balance(n_clicks, address):
         # Value of Ether Balance
         response_ether = requests.get(f"https://api.etherscan.io/api?module=stats&action=ethprice&apikey={etherscan_key}")
         ether_price = response_ether.json()['result']['ethusd']
-        print(ether_price)
-        print(converted)
-        ether_value = float(ether_price) * float(converted)
+        ether_value = "$" + str(round(float(ether_price) * float(converted), 2))
 
         # find transaction count for address
         transaction_count = w3.eth.get_transaction_count(clean_address)
@@ -149,9 +150,9 @@ def get_balance(n_clicks, address):
         results = response_nft.json()['result']
         for i in range(len(results)):
             if i == 0:
-                nft_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
+                nft_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
             else:
-                nft_transfers.append(f", {i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
+                nft_transfers.append("\n" + f", {i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
 
         # ERC20 token transfers
         response_token = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokentx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
@@ -159,8 +160,8 @@ def get_balance(n_clicks, address):
         results = response_token.json()['result']
         for i in range(len(results)):
             if i == 0:
-                token_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
+                token_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
             else:
-                token_transfers.append(f", {i + 1}) " + str(results[i]['tokenName']) + ": " + str(results[i]['tokenSymbol']))
+                token_transfers.append(f", {i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
 
     return address, balance_eth, ether_value, transaction_count, nft_transfers, token_transfers
