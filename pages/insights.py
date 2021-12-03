@@ -10,18 +10,19 @@ from app import app
 
 # 1 column layout
 # https://dash-bootstrap-components.opensource.faculty.ai/l/components/layout
-column1 = dbc.Col(
-    [
-        dcc.Markdown(
-            """
-        
-            ## Insights
+# column1 = dbc.Col(
+#     [
+layout = html.Div([
+    dcc.Markdown(
+        """
 
+        ## Insights
+        # Hello
 
-            """
-        ),
-
-    ],
+        """
+    )], style={'text-align': 'center'}
 )
+#     ],
+# )
 
-layout = dbc.Row([column1])
+# layout = dbc.Row([column1])
