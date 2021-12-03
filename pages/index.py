@@ -84,7 +84,16 @@ layout = html.Div([
                 html.Br(),
             ], width='auto'),
         ]),
-        
+        dbc.Row([
+            dbc.Col([
+                dcc.Graph(id='nft_graph', figure={}),
+                html.Br(),
+                html.Br(),
+            ]),
+            dbc.Col([
+                dcc.Graph(id='token_graph', figure={})
+            ])
+        ]),
         dbc.Row([
             dbc.Col([
                 html.Div(id='display_nft_transfers', style={'font-size': '40px'}),
@@ -97,17 +106,6 @@ layout = html.Div([
                 html.Div(id='token_transfers'),
                 html.Br(),
                 html.Br(),
-            ])
-        ]),
-
-        dbc.Row([
-            dbc.Col([
-                dcc.Graph(id='nft_graph', figure={}),
-                html.Br(),
-                html.Br(),
-            ]),
-            dbc.Col([
-                dcc.Graph(id='token_graph', figure={})
             ])
         ])
 ])
@@ -174,11 +172,19 @@ def get_balance(n_clicks, address):
         response_nft = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokennfttx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
         nft_transfers = []
         results = response_nft.json()['result']
-        for i in range(len(results)):
-            if i == 0:
-                nft_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
-            else:
-                nft_transfers.append("\n" + f", {i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
+        threshold = 50
+        if len(results) <= threshold:
+            for i in range(len(results)):
+                if i == 0:
+                    nft_transfers.append("1.) " + str(results[-1]['tokenName']) + " (" + str(results[-1]['tokenSymbol']) + ")")
+                else:
+                    nft_transfers.append("\n" + f", {i + 1}.) " + str(results[-1-i]['tokenName']) + " (" + str(results[-1-i]['tokenSymbol']) + ")")
+        else:
+            for i in range(threshold):
+                if i == 0:
+                    nft_transfers.append("1.) " + str(results[-1]['tokenName']) + " (" + str(results[-1]['tokenSymbol']) + ")")
+                else:
+                    nft_transfers.append("\n" + f", {i + 1}.) " + str(results[-1-i]['tokenName']) + " (" + str(results[-1-i]['tokenSymbol']) + ")")
         
 
         # VISUALIZE NFT TRANSFERS
@@ -207,11 +213,18 @@ def get_balance(n_clicks, address):
         response_token = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokentx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
         token_transfers = []
         results = response_token.json()['result']
-        for i in range(len(results)):
-            if i == 0:
-                token_transfers.append(f"{i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
-            else:
-                token_transfers.append(f", {i + 1}) " + str(results[i]['tokenName']) + " (" + str(results[i]['tokenSymbol']) + ")")
+        if len(results) <= threshold:
+            for i in range(len(results)):
+                if i == 0:
+                    token_transfers.append("1.) " + str(results[-1]['tokenName']) + " (" + str(results[-1]['tokenSymbol']) + ")")
+                else:
+                    token_transfers.append(f", {i + 1}.) " + str(results[-1-i]['tokenName']) + " (" + str(results[-1-i]['tokenSymbol']) + ")")
+        else:
+            for i in range(threshold):
+                if i == 0:
+                    token_transfers.append("1.) " + str(results[-1]['tokenName']) + " (" + str(results[-1]['tokenSymbol']) + ")")
+                else:
+                    token_transfers.append(f", {i + 1}.) " + str(results[-1-i]['tokenName']) + " (" + str(results[-1-i]['tokenSymbol']) + ")")
 
         # VISUALIZE ERC20 token transfers
         times = {}
@@ -234,49 +247,3 @@ def get_balance(n_clicks, address):
         'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)', 'title_font_color':'#54fbe1', 'yaxis_showgrid':False})
 
     return address, display_balance, balance_eth, display_ether, ether_value, display_transaction_count, transaction_count, display_nft_transfers, nft_transfers, nft_graph, display_token_transfers, token_transfers, token_graph
-
-
-# @app.callback(
-#     [Output(component_id='nft_graph', component_property='figure'),
-#     Output(component_id='nft_graph_text', component_property='value')],
-#     [Input(component_id='search', component_property='n_clicks')],
-#     [State(component_id='address', component_property='value')]
-# )
-
-# def graph_nft(n_clicks, address):
-#     nft_graph_title = "NFT TRANSFERS OVER TIME"
-
-#     if n_clicks == 0 or address is None:
-#         raise PreventUpdate
-#     else:
-#         print('it works')
-#         address = address.strip()
-#         if address[:2] == '0x':
-#             clean_address = Web3.toChecksumAddress(address.strip())
-#         else:
-#             ns = ENS.fromWeb3(w3)
-#             clean_address = ns.address(address)
-
-#         response_nft_graph = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokennfttx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
-#         results = response_nft_graph.json()['result']
-#         # Visualize NFT Transfers
-#         times = {}
-#         for i in range(len(results)):
-#             unix = int(results[i]['timeStamp'])
-#             time = epoch_conversion(unix)
-#             format_time = str(time.year) + "-" + str(time.month) + "-" + str(time.day)
-#             if format_time not in times:
-#                 times[format_time] = 1
-#             else:
-#                 times[format_time] += 1
-            
-#         df = pd.DataFrame(times, index=[0])
-#         fig = px.bar(df, #x=time, y=transfers,
-#                         title="NFT TRANSFERS OVER TIME")
-#         # fig.update_layout(xaxis_title='TIME', yaxis_title='TRANSFERS')
-#         print('hello')
-#     return fig, nft_graph_title
-
-
-
-
