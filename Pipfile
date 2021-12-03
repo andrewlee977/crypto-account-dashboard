@@ -14,8 +14,11 @@ web3 = "*"
 python-dotenv = "*"
 requests = "*"
 ens = "*"
+datetime = "*"
+pytz = "*"
 
 [dev-packages]
+ipykernel = "*"
 
 [requires]
 python_version = "3.9"
