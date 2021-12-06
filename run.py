@@ -36,9 +36,9 @@ footer = dbc.Container(
             html.P(
                 [
                     html.Span('Andrew Lee', className='mr-2'), 
-                    html.A(html.I(className='fas fa-envelope-square mr-1'), href='mailto:andrew.lee97@gmail.com'), 
-                    html.A(html.I(className='fab fa-github-square mr-1'), href='https://github.com/andrewlee977/crypto-dashboard'), 
-                    html.A(html.I(className='fab fa-linkedin mr-1'), href='https://www.linkedin.com/in/andrewlee97/'),
+                    html.A(html.I(className='fas fa-envelope-square mr-1'), href='mailto:andrew.lee97@gmail.com', style={'color': '#46d9e8'}), 
+                    html.A(html.I(className='fab fa-github-square mr-1'), href='https://github.com/andrewlee977/crypto-dashboard', style={'color': '#46d9e8'}), 
+                    html.A(html.I(className='fab fa-linkedin mr-1'), href='https://www.linkedin.com/in/andrewlee97/', style={'color': '#46d9e8'}),
                 ], 
                 className='lead'
             )
