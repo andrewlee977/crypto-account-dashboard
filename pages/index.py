@@ -57,46 +57,76 @@ layout = html.Div([
     html.Br(),
     html.Div(id='display_address', style={'font-size': '40px', 'color': 'white'}),
     html.Br(),
+
     dbc.Row([
         dbc.Col([
-            html.Div(id='display_balance', style={'font-size': '40px'}),
-            html.Div(id='balance'),
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div(id='display_balance', style={'font-size': '40px', 'color': 'white'}),
+                    html.Div(id='balance', style={'color': 'white'}),
+                ])
+            ], color='#636060'),
             html.Br(),
             html.Br(),
-        ], width='auto'),
+        ], width='4'),
         dbc.Col([
-        html.Div(id='display_ether', style={'font-size': '40px'}),
-        html.Div(id='ether_value'),
-        html.Br(),
-        html.Br(),
-        ], width='auto'),
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div(id='display_ether', style={'font-size': '40px'}),
+                    html.Div(id='ether_value'),
+                ])
+            ], color='#636060'),
+            html.Br(),
+            html.Br(),
+        ], width='4'),
         dbc.Col([
-            html.Div(id='display_transaction_count', style={'font-size': '40px'}),
-            html.Div(id='transaction_count'),
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div(id='display_transaction_count', style={'font-size': '40px'}),
+                    html.Div(id='transaction_count'),
+                ])
+            ], color='#636060'),
             html.Br(),
             html.Br(),
-        ], width='auto'),
+        ], width='4'),
     ]),
+
     dbc.Row([
         dbc.Col([
-            dcc.Graph(id='nft_graph', figure={}),
+            dbc.Card([
+                dbc.CardBody([
+                    dcc.Graph(id='nft_graph', figure={})
+                ])
+            ], color='#636060'),
             html.Br(),
             html.Br(),
         ]),
         dbc.Col([
-            dcc.Graph(id='token_graph', figure={})
+            dbc.Card([
+                dbc.CardBody([
+                    dcc.Graph(id='token_graph', figure={})
+                ])
+            ], color='#636060'),
         ])
     ]),
     dbc.Row([
         dbc.Col([
-            html.Div(id='display_nft_transfers', style={'font-size': '40px'}),
-            html.Div(id='nft_transfers'),
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div(id='display_nft_transfers', style={'font-size': '40px'}),
+                    html.Div(id='nft_transfers'),
+                ])
+            ], color='#636060'),
             html.Br(),
             html.Br(),
         ]),
         dbc.Col([
-            html.Div(id='display_token_transfers', style={'font-size': '40px'}),
-            html.Div(id='token_transfers'),
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div(id='display_token_transfers', style={'font-size': '40px'}),
+                    html.Div(id='token_transfers'),
+                ])
+            ], color='#636060'),
             html.Br(),
             html.Br(),
         ])
@@ -133,7 +163,7 @@ def epoch_conversion(epoch):
 def get_balance(n_clicks, address):
 
     display_balance = "BALANCE"
-    display_ether = "TOTAL ETHER VALUE (USD)"
+    display_ether = "ETHER VALUE (USD)"
     display_transaction_count = "TRANSACTIONS"
     display_nft_transfers = "NFT TRANSFERS"
     display_token_transfers = "ERC 20 TOKENS"
@@ -192,10 +222,9 @@ def get_balance(n_clicks, address):
                 times[format_time] += 1
         
         df = pd.DataFrame(times.items(), columns=['date', 'transfers'])
-        print(df)
-        nft_graph = px.bar(df, x='date', y='transfers', color_discrete_sequence=["#54fbe1"], title="NFT TRANSFERS OVER TIME")
-        nft_graph.update_layout({'xaxis_title':'TIME', 'xaxis_color': '#54fbe1', 'yaxis_color': '#54fbe1', 'yaxis_title':'TRANSFERS',
-        'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)', 'title_font_color':'#54fbe1', 'yaxis_showgrid':False})
+        nft_graph = px.bar(df, x='date', y='transfers', color_discrete_sequence=["white"], title="NFT TRANSFERS OVER TIME")
+        nft_graph.update_layout({'xaxis_title':'TIME', 'xaxis_color': 'white', 'yaxis_color': 'white', 'yaxis_title':'TRANSFERS',
+        'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)', 'title_font_color':'white', 'yaxis_showgrid':False})
 
         # ERC20 token transfers
         response_token = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokentx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
@@ -226,8 +255,8 @@ def get_balance(n_clicks, address):
                 times[format_time] += 1
         
         df = pd.DataFrame(times.items(), columns=['date', 'transfers'])
-        token_graph = px.bar(df, x='date', y='transfers', color_discrete_sequence=["#54fbe1"], title="ERC20 TRANSFERS OVER TIME")
-        token_graph.update_layout({'xaxis_title':'TIME', 'xaxis_color': '#54fbe1', 'yaxis_color': '#54fbe1', 'yaxis_title':'TRANSFERS',
-        'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)', 'title_font_color':'#54fbe1', 'yaxis_showgrid':False})
+        token_graph = px.bar(df, x='date', y='transfers', color_discrete_sequence=["white"], title="ERC20 TRANSFERS OVER TIME")
+        token_graph.update_layout({'xaxis_title':'TIME', 'xaxis_color': 'white', 'yaxis_color': 'white', 'yaxis_title':'TRANSFERS',
+        'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)', 'title_font_color':'white', 'yaxis_showgrid':False})
 
     return address, display_balance, balance_eth, display_ether, ether_value, display_transaction_count, transaction_count, display_nft_transfers, nft_transfers, nft_graph, display_token_transfers, token_transfers, token_graph
