@@ -54,5 +54,5 @@ meta_tags=[
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, meta_tags=meta_tags)
 app.config.suppress_callback_exceptions = True # see https://dash.plot.ly/urls
-app.title = 'Crypto Portfolio Dashboard' # appears in browser title bar
+app.title = 'COCKPIT' # appears in browser title bar
 server = app.server
