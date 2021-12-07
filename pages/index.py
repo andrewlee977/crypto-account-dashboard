@@ -3,9 +3,10 @@ from os import getenv
 from numpy import datetime_as_string
 import requests
 import dash
+from dash import html, dcc
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
+# import dash_core_components as dcc
+# import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.express as px
@@ -139,18 +140,25 @@ layout = html.Div([
     ]),
     dbc.Row([
         dbc.Col([
-            # children=[generate_nft_holdings(nft_url) for nft_url in nft_images
-            # html.Img(src='https://lh3.googleusercontent.com/pAKscQ7EgNw0PJ9pdc15_MtF0LX110C2L257rS-1CvKm05J2V8wl9399_5A7Rd0xJpT3bWZ9m7yo875YJaMYxhuaMxHppbX_n7Fc=s128')
-            # children=[generate_nft_holdings(nft_image) for nft_image in nft_holdings
-            html.Div(id='nft_images')
-            # html.Div([html.Img(src={img}) for img in (html.Div(id='nft_images'))])
+            dbc.Card([
+                dbc.CardBody([
+                    dcc.Loading(id="loading-1", children=[html.Div(id='display_nft_holdings', style={'font-size': '40px'})],type='circle'),
+                    html.Div(id='nft_images')
+                ])
+            ], color='#636060')
         ], width=6),
         dbc.Col([
-            html.Img(src='https://lh3.googleusercontent.com/pAKscQ7EgNw0PJ9pdc15_MtF0LX110C2L257rS-1CvKm05J2V8wl9399_5A7Rd0xJpT3bWZ9m7yo875YJaMYxhuaMxHppbX_n7Fc=s128')
+            dbc.Card([
+                dbc.CardBody([
+                    dcc.Loading(id='loading-2', children=[html.Div(id='display_token_holdings', style={'font-size': '40px'})],type='circle'),
+                    html.Div(id='token_images')
+                ])
+            ], color='#636060')
         ], width=6)
     ])
 
 ])
+
 
 # Epoch conversion (seconds)
 def epoch_conversion(epoch):
@@ -159,6 +167,16 @@ def epoch_conversion(epoch):
     local_datetime = utc_datetime.replace(tzinfo=pytz.utc)
     local_datetime = local_datetime.astimezone(local_timezone)
     return local_datetime
+
+def address_to_checksum(address):
+    address = address.strip()
+    if address[:2] == '0x':
+        clean_address = Web3.toChecksumAddress(address.strip())
+    else:
+        # Converts ENS address to checksum address
+        ns = ENS.fromWeb3(w3)
+        clean_address = ns.address(address)
+    return clean_address
 
 @app.callback(
     [Output(component_id='display_address', component_property='children'),
@@ -190,14 +208,8 @@ def get_balance(n_clicks, address):
         raise PreventUpdate
     else:
         # Cleans and converts address to Checksum Address
-        address = address.strip()
-        if address[:2] == '0x':
-            clean_address = Web3.toChecksumAddress(address.strip())
-        else:
-            # Converts ENS address to checksum address
-            ns = ENS.fromWeb3(w3)
-            clean_address = ns.address(address)
-        
+        clean_address = address_to_checksum(address)
+
         # find balance for address
         balance_wei = w3.eth.get_balance(clean_address)
         converted = w3.fromWei(balance_wei, 'ether') 
@@ -283,23 +295,20 @@ def get_balance(n_clicks, address):
 
 
 @app.callback(
-    Output(component_id='nft_images', component_property='children'),
+    [Output(component_id='nft_images', component_property='children'),
+    Output(component_id='display_nft_holdings', component_property='children')],
     [Input(component_id='search', component_property='n_clicks')],
     [State(component_id='address', component_property='value')]
 )
 
-def generate_holdings(n_clicks, address):
+def generate_nft_holdings(n_clicks, address):
     if n_clicks == 0 or address is None:
         raise PreventUpdate
     else:
+        display_nft_holdings = "NFT HOLDINGS"
+
         # Cleans and converts address to Checksum Address
-        address = address.strip()
-        if address[:2] == '0x':
-            clean_address = Web3.toChecksumAddress(address.strip())
-        else:
-            # Converts ENS address to checksum address
-            ns = ENS.fromWeb3(w3)
-            clean_address = ns.address(address)
+        clean_address = address_to_checksum(address)
 
         response_nft = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokennfttx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
         results_nft = response_nft.json()['result']
@@ -321,20 +330,71 @@ def generate_holdings(n_clicks, address):
         for i in range(len(holdings)):
             contract_address = holdings[i][0]
             contract_tokenID = holdings[i][1]
-            # response_nft_image = requests.request("GET", f"https://api.opensea.io/api/v1/asset/{contract_address}/{contract_tokenID}/")
-
             try:
                 response_nft_image = requests.request("GET", f"https://api.opensea.io/api/v1/asset/{contract_address}/{contract_tokenID}/")
                 nft_images.append(html.Img(src=response_nft_image.json()['image_preview_url'], style={'height': '10%', 'width': '10%'}))
             except (IndexError, KeyError, TypeError):
-                print('not working')
-        #     if not response_nft_image.json()['image_preview_url']:
-        #         print('no image')
-        #     else:
-        #         nft_images.append(html.Img(src=response_nft_image.json()['image_preview_url']))
-        #         print('it works')
-        # print(nft_images)
-        # print("HELLO")
+                pass
 
-    return nft_images
+    return nft_images, display_nft_holdings
+
+
+@app.callback(
+    [Output(component_id='token_images', component_property='children'),
+    Output(component_id='display_token_holdings', component_property='children')],
+    [Input(component_id='search', component_property='n_clicks')],
+    [State(component_id='address', component_property='value')]
+)
+
+def generate_nft_holdings(n_clicks, address):
+    if n_clicks == 0 or address is None:
+        raise PreventUpdate
+    else:
+        display_token_holdings = "ERC20 HOLDINGS"
+
+        # Cleans and converts address to Checksum Address
+        clean_address = address_to_checksum(address)
+
+        response_token = requests.get(f"""https://api.etherscan.io/api?module=account&action=tokentx&address={clean_address}&startblock=0&endblock=999999999&sort=asc&apikey={etherscan_key}""")
+        results_token = response_token.json()['result']
+
+        # TOKEN HOLDINGS
+        # transfers_in = []
+        # transfers_out = []
+        holdings = {}
+        for i in range(len(results_token)):
+            contract_address = address_to_checksum(results_token[i]['contractAddress'])
+            token_value = int(results_token[i]['value'])
+            if results_token[i]['to'] == clean_address.lower():
+                if contract_address in holdings:
+                    holdings[contract_address] += token_value
+                else:
+                    holdings[contract_address] = token_value
+                # transfers_in.append((results_token[i]['contractAddress'], results_token[i]['tokenID']))
+            else:
+                if contract_address in holdings:
+                    holdings[contract_address] -= token_value
+                else:
+                    holdings[contract_address] = -token_value
+                # transfers_out.append((results_token[i]['contractAddress'], results_token[i]['tokenID']))
+        # print(holdings)
+
+        token_holdings = []
+        for key, val in holdings.items():
+            if val != 0:
+                token_holdings.append(key)
+
+        token_images = []
+        for address in token_holdings:
+            try:
+                response_token_image = f"https://assets.trustwalletapp.com/blockchains/ethereum/assets/{address}/logo.png"
+                # response_token_image = requests.get(f"https://assets.trustwalletapp.com/blockchains/ethereum/assets/{contract_address}/logo.png")
+                if response_token_image:
+                    token_images.append(html.Img(src=response_token_image, style={'height': '20%', 'width': '20%'}))
+                # print(response_token_image[:3])
+            except (IndexError, KeyError, TypeError):
+                print('Error')
+
+    return token_images, display_token_holdings
+
 
