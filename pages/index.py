@@ -162,6 +162,7 @@ layout = html.Div([
 
 # Epoch conversion (seconds)
 def epoch_conversion(epoch):
+    """Converts unix time to datetime object"""
     utc_datetime = datetime.fromtimestamp(epoch)
     local_timezone = pytz.timezone('US/Pacific')
     local_datetime = utc_datetime.replace(tzinfo=pytz.utc)
@@ -169,14 +170,20 @@ def epoch_conversion(epoch):
     return local_datetime
 
 def address_to_checksum(address):
+    """Converts Ethereum address (0x or ENS) to Checksum address"""
     address = address.strip()
     if address[:2] == '0x':
-        clean_address = Web3.toChecksumAddress(address.strip())
+        clean_address = Web3.toChecksumAddress(address)
     else:
         # Converts ENS address to checksum address
         ns = ENS.fromWeb3(w3)
         clean_address = ns.address(address)
     return clean_address
+
+def wei_to_ether(balance_wei):
+    """Takes in Wei value (int) and returns Eth balance (float)"""
+    balance_eth = float(w3.fromWei(balance_wei, 'ether'))
+    return balance_eth
 
 @app.callback(
     [Output(component_id='display_address', component_property='children'),
@@ -197,6 +204,12 @@ def address_to_checksum(address):
 )
 
 def get_balance(n_clicks, address):
+    """
+    Function takes in n_clicks and Ethereum address and outputs
+    the address's Balance, Ether Value, # of Transactions, 
+    NFT transfers over time graph, ERC20 transfers over time graph,
+    Recent NFT transfers, and Recent ERC20 Token transfers
+    """
 
     display_balance = "BALANCE"
     display_ether = "ETHER VALUE (USD)"
@@ -212,7 +225,7 @@ def get_balance(n_clicks, address):
 
         # find balance for address
         balance_wei = w3.eth.get_balance(clean_address)
-        converted = w3.fromWei(balance_wei, 'ether') 
+        converted = wei_to_ether(balance_wei)
         balance_eth = str(converted) + ' ETH'
 
         # Value of Ether Balance
@@ -302,6 +315,10 @@ def get_balance(n_clicks, address):
 )
 
 def generate_nft_holdings(n_clicks, address):
+    """
+    Function takes in n_clicks and Ethereum address and outputs
+    images of the address's NFT holdings
+    """
     if n_clicks == 0 or address is None:
         raise PreventUpdate
     else:
@@ -346,7 +363,11 @@ def generate_nft_holdings(n_clicks, address):
     [State(component_id='address', component_property='value')]
 )
 
-def generate_nft_holdings(n_clicks, address):
+def generate_token_holdings(n_clicks, address):
+    """
+    Function takes in n_clicks and Ethereum address and outputs
+    images of the address's ERC20 token holdings
+    """
     if n_clicks == 0 or address is None:
         raise PreventUpdate
     else:
@@ -364,37 +385,36 @@ def generate_nft_holdings(n_clicks, address):
         holdings = {}
         for i in range(len(results_token)):
             contract_address = address_to_checksum(results_token[i]['contractAddress'])
-            token_value = int(results_token[i]['value'])
+            token_symbol = results_token[i]['tokenSymbol']
+            token_value = wei_to_ether(int(results_token[i]['value']))
+
             if results_token[i]['to'] == clean_address.lower():
-                if contract_address in holdings:
-                    holdings[contract_address] += token_value
+                if (contract_address, token_symbol) in holdings:
+                    holdings[(contract_address, token_symbol)] += token_value
                 else:
-                    holdings[contract_address] = token_value
+                    holdings[(contract_address, token_symbol)] = token_value
                 # transfers_in.append((results_token[i]['contractAddress'], results_token[i]['tokenID']))
             else:
-                if contract_address in holdings:
-                    holdings[contract_address] -= token_value
+                if (contract_address, token_symbol) in holdings:
+                    holdings[(contract_address, token_symbol)] -= token_value
                 else:
-                    holdings[contract_address] = -token_value
-                # transfers_out.append((results_token[i]['contractAddress'], results_token[i]['tokenID']))
-        # print(holdings)
-
+                    holdings[(contract_address, token_symbol)] = -token_value
+        for key, val in holdings.items():
+            print(key[1], val)
+                
         token_holdings = []
         for key, val in holdings.items():
-            if val != 0:
-                token_holdings.append(key)
+            if val > 0:
+                token_holdings.append(key[0])
 
         token_images = []
         for address in token_holdings:
             try:
                 response_token_image = f"https://assets.trustwalletapp.com/blockchains/ethereum/assets/{address}/logo.png"
-                # response_token_image = requests.get(f"https://assets.trustwalletapp.com/blockchains/ethereum/assets/{contract_address}/logo.png")
-                if response_token_image:
-                    token_images.append(html.Img(src=response_token_image, style={'height': '20%', 'width': '20%'}))
-                # print(response_token_image[:3])
+                # if response_token_image:
+                token_images.append(html.Img(src=response_token_image, style={'height': '20%', 'width': '20%'}))
             except (IndexError, KeyError, TypeError):
-                print('Error')
+                pass
+        # print(token_holdings)
 
     return token_images, display_token_holdings
-
-
