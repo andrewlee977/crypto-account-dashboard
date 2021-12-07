@@ -11,7 +11,7 @@ from pages import index, dashboard, insights
 
 # Navbar docs: https://dash-bootstrap-components.opensource.faculty.ai/l/components/navbar
 navbar = dbc.NavbarSimple(
-    brand='COCKPIT',
+    brand='COCKPIT ✈',
     brand_href='/', 
     children=[
         dbc.NavItem(dcc.Link('Dashboard', href='/dashboard', className='nav-link')), 
