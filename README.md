@@ -1,3 +1,3 @@
-# Dash Template
+# Dashboard
 
 ![Dashboard](assets/dashboard.png "Dashboard")
